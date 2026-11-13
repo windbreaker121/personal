@@ -1,8 +1,8 @@
 # Notes on the code
 # $a0, takes a label, not a literal string object
 # use move when copying integer to register $a
-# 
-# 
+# asciiz: null terminated string, which $v0 = 4, expects in syscall
+# no semicolumns
 # 
 # 
 .data
@@ -14,41 +14,41 @@ new_line: .asciiz "\n"
 separator: .asciiz "================\n"
 
 # Stages Labels
-stage1label: .ascii "Stage 1 inner loop------------\n"
-stage2label: .ascii "Stage 2 basic condition------------\n"
-stage3label: .ascii "Stage 3 multiple condition AND------------\n"
-stage4label: .ascii "Stage 4 multiple condition OR------------\n"
-stage5label: .ascii "Stage 5 nested condition------------\n"
+stage1label: .asciiz "Stage 1 inner loop------------\n"
+stage2label: .asciiz "Stage 2 basic condition------------\n"
+stage3label: .asciiz "Stage 3 multiple condition AND------------\n"
+stage4label: .asciiz "Stage 4 multiple condition OR------------\n"
+stage5label: .asciiz "Stage 5 nested condition------------\n"
 stage6Label: .asciiz "Stage 6 Array and Stack pointer Memory...\n"
-stage7label: .ascii "Stage 7 loop2------------\n"
-stage8label: .ascii "Stage 8 procedure call, jr and jal------------\n"
-stage9label: .ascii "Stage 9 saving and restoring callee registers state Including $ra and $sX registers------------\n"
+stage7label: .asciiz "Stage 7 loop2------------\n"
+stage8label: .asciiz "Stage 8 procedure call, jr and jal------------\n"
+stage9label: .asciiz "Stage 9 saving and restoring callee registers state Including $ra and $sX registers------------\n"
 
 # stage 1 labels:
-stage0Inner1: .ascii "pass j instruction (fail)"
-stage1Inner1: .ascii "current a: "
-stage1Inner2: .ascii "a reached b Equal: "
-stage1Inner3: .ascii "Exit loop...\n"
+stage1Inner1: .asciiz "pass j instruction (fail)"
+stage1Inner2: .asciiz "current a: "
+stage1Inner3: .asciiz "a reached b Equal: "
+stage1Inner4: .asciiz "Exit loop...\n"
 
 # stage 2 labels:
-stage2Inner1: .ascii "a not less than b\nc = 0\n"
-stage2Inner2: .ascii "a less than b\nc = 1\n"
+stage2Inner1: .asciiz "a not less than b\nc = 0\n"
+stage2Inner2: .asciiz "a less than b\nc = 1\n"
 
 # stage 3 labels:
-stage3Inner1: .ascii "a > 0\n"
-stage3Inner2: .ascii "b > 0\n c = 1"
-stage3Inner3: .ascii "a and b <= 0\n c = 0"
+stage3Inner1: .asciiz "a > 0\n"
+stage3Inner2: .asciiz "b > 0\n c = 1"
+stage3Inner3: .asciiz "a and b <= 0\n c = 0"
 
 # stage 4 labels:
-stage4Inner1: .ascii "at least one is greater than zero, condition true\n c = 0"
-stage4Inner2: .ascii "neither a or b are greater than zero\n c = 0"
+stage4Inner1: .asciiz "at least one is greater than zero, condition true\n c = 0"
+stage4Inner2: .asciiz "neither a or b are greater than zero\n c = 0"
 
 # stage 5 labels:
-stage5Inner1: .ascii "neither a or b are greater than zero\n c = 0"
-stage5Inner2: .ascii "either a <= 0, or b <= 10\n c = 0"
+stage5Inner1: .asciiz "a > 0 and b > 10\nc = 1\n"
+stage5Inner2: .asciiz "either a <= 0, or b <= 10\n c = 0"
 
 # stage 6 labels:
-stage6Inner1: .ascii "Retrieved Values\n"
+stage6Inner1: .asciiz "Retrieved Values\n"
 
 
 .text
@@ -56,17 +56,17 @@ stage6Inner1: .ascii "Retrieved Values\n"
 # Stage-0 Start messages
 #===========================
     li $v0, 4
-    la $a0, separator;
+    la $a0, separator
     syscall
-    la $a0, start;
+    la $a0, start
     syscall    
-    la $a0, separator;
+    la $a0, separator
     syscall
-    la $a0, new_line;
+    la $a0, new_line
     syscall 
     j stage1
 
-    la $a0, stage1Inner1;
+    la $a0, stage1Inner1
     syscall 
 
 #===========================
@@ -88,7 +88,7 @@ stage1:
 
         inner:
             li $v0, 4
-            la $a0, stage1Inner1
+            la $a0, stage1Inner2
             syscall
             li $v0, 1
             move $a0, $t0            
@@ -96,18 +96,18 @@ stage1:
 
             beq $t0, $t1, exit_loop
             addi $t0, $t0, 1
-            j inner;
+            j inner
 
         exit_loop:
             li $v0, 4
-            la $a0, stage0Inner2
+            la $a0, stage1Inner3
             syscall
             li $v0, 1
             move $a0, $t0
             syscall
 
             li $v0, 4
-            la $a0, stage0Inner3
+            la $a0, stage1Inner4
             syscall
             j stage2
 
@@ -239,12 +239,13 @@ stage5:
     la $a0, separator
     syscall
     li $t0, 2
-    li $t1, 4
+    li $t1, 11
 
     # if first condition if false, then all is false end if
     ble $t0, 0, endIF3
     ble $t1, 10, endIF3
     # body since both passed
+    li $t2, 1
     li $v0, 4
     la $a0, stage5Inner1
     syscall
@@ -252,7 +253,8 @@ stage5:
 
 
     endIF3:
-    li $v0, 4
+        li $t2, 0
+        li $v0, 4
         la $a0, stage5Inner2
         syscall
         j stage6
@@ -383,7 +385,6 @@ stage7:
     
 
     li $t0, 0 # i = 0
-    j loop
 
     loop:
         bge $t0, 5, endLoop # from 0 to 4
@@ -421,13 +422,14 @@ stage8:
 
     jal addNumbers
 
-    li $v0, 1 # this instruction is where the return address in $ra stored by jal points to
+    # this instruction is where the return address in $ra stored by jal points to
     # when jr $ra instruction is exeuted the cpu then executed this instruction
     # thats the only difference between j and jal, the return address
     # hence it can be used with recursion so each call returns to the very previous call
     # and we need to allocate memory to store all those return addresses
     # since $ra is just one register used once at a time
-    move $a0, $t4
+    move $a0, $v0
+    li $v0, 1
     syscall
 
     j stage9 
