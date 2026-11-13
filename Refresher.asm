@@ -23,6 +23,7 @@ stage6Label: .asciiz "Stage 6 Array and Stack pointer Memory...\n"
 stage7label: .asciiz "Stage 7 loop2------------\n"
 stage8label: .asciiz "Stage 8 procedure call, jr and jal------------\n"
 stage9label: .asciiz "Stage 9 saving and restoring callee registers state Including $ra and $sX registers------------\n"
+stage10label: .asciiz "Stage 10 bitwise operations------------\n"
 
 # stage 1 labels:
 stage1Inner1: .asciiz "pass j instruction (fail)"
@@ -50,6 +51,19 @@ stage5Inner2: .asciiz "either a <= 0, or b <= 10\n c = 0"
 # stage 6 labels:
 stage6Inner1: .asciiz "Retrieved Values\n"
 
+# stage 10 data
+byte_value: .byte 250
+.align 1
+half_value: .half 60000
+.align 2
+word_value: .word 100000
+
+.data
+byte_destination: .space 1
+.align 1
+half_destination: .space 2
+.align 2
+word_destination: .space 4
 
 .text
 #===========================
@@ -459,7 +473,7 @@ stage9:
     jal my_procedure
     
     # continue here
-    j EXIT
+    j stage10
 
 my_procedure:
     addi $sp, $sp, -8
@@ -476,6 +490,246 @@ my_procedure:
 
     addi $sp, $sp, 8
     jr $ra
+
+stage10:
+    li $v0, 4
+    la $a0, separator
+    syscall
+    la $a0, stage10label
+    syscall
+    la $a0, separator
+    syscall
+
+    # and, or, xor, nor, ori(ors with an immediate instead of register I-type)
+
+    li $t0, 6 # 110
+    li $t1, 1 # 001
+
+    and $t2, $t0, $t1 
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 0    
+    
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    li $t0, 7 # 111
+    li $t1, 1 # 001
+
+    and $t2, $t0, $t1 
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 1
+        
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    li $t0, 5 # 101
+    li $t1, 5 # 101
+
+    and $t2, $t0, $t1 
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 101 > 5
+        
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    li $t0, 2 # 010
+    li $t1, 4 # 100
+
+    and $t2, $t0, $t1 
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 0
+        
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    li $t0, 7 # 111
+    li $t1, 7 # 111
+
+    and $t2, $t0, $t1 
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 111 > 7
+        
+    li $v0, 4
+    la $a0, new_line
+    syscall    
+    
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    # shifting
+    # sll, srl, sra (shit left logical, shift right logical, shift right arithmetic)
+    # mips stored numbers in 16 bit, anymore and shifting will drop bits
+
+    # shift left
+    # shift left by 1 = multiplying by 2
+    # by 2 = by 4
+    # by 3 = by 8
+    li $t0, 7 # 111
+    sll $t2, $t0, 1 # shift left by 1, store in $t2
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 111 > 1110 = 14 > 7*2
+    
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    sll $t2, $t0, 2 # shift left by 1, store in $t2
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 11100 = 28 > 7*4
+    
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    sll $t2, $t0, 3 # shift left by 1, store in $t2
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 111000 = 56 > 7*8
+    
+    li $v0, 4
+    la $a0, new_line
+    syscall    
+    syscall
+
+    # shift right
+    # shift right by 1 = dividing by 2
+    # by 2 = by 4
+    # by 3 = by 8
+    li $t0, 16 # 10000 (16, 8, 4, 2, 1)
+    srl $t2, $t0, 1 # shift right by 1, store in $t2
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 10000 > 1000 = 16 /2 = 8
+    
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    srl $t2, $t0, 2 # shift right by 2, store in $t2
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 100 > 16 /4 = 4
+    
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    srl $t2, $t0, 3 # shift right by 3, store in $t2
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 10 > 16 /8 = 2    
+
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    srl $t2, $t0, 4 # shift right by 4, store in $t2
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 1 > 16 /16 = 1
+
+    li $v0, 4
+    la $a0, new_line
+    syscall
+
+    srl $t2, $t0, 5 # shift right by 5, store in $t2
+    li $v0, 1
+    move $a0, $t2    
+    syscall # 0 > 16 / 16*2(32) = 0
+    
+    li $v0, 4
+    la $a0, new_line
+    syscall
+    # answer should be, 14, 28, 56. True
+    # answer should be, 8, 4, 2, 1, 0  false, 8 4 2 2 2, why not 1, 0
+
+    # sra
+    # shift right arithmetic
+    # others sll, and arl fills zero on the right and fills zero on the left respectivly
+    # sra: replicates the sign bit on the left
+
+    # how it handles signed negative numbers
+    # 0 positive
+    # 1 negative
+
+    # for positive numbers
+    # srl and sra produce the same output
+    # since sra replicates the sign bit which is zero
+    # and srl fills with zero too on the left
+    li $t0, 16
+    sra $t1, $t0, 2 # shift right arithmetic by 2, store in t1
+
+    # for negative numbers
+    # srl will fill zeros
+    # sra will replicate the sign bit which is 1 then
+    # so for example
+    li $t0, -16
+    srl $t1, $t0, 2 # 1073741820
+    sra $t2, $t0, 2 # -4 , 
+
+    # load and store
+    # lb, lbu, lh, lhu, lw, sb, sh, sw
+    # l: copies data from memory into a register
+    # s: copy data from register into memory
+    # General syntax:
+    # lw $t0, offset($t1)
+    # sw $t0, offset($t1)
+
+    lb  $t0, byte_value # load the byte byte_value into t0, t0 = -6 (signed)
+    lbu $t1, byte_value # load byte (unsigned) 250
+
+    lh  $t2, half_value # -5536
+    lhu $t3, half_value # 60000
+
+    lw  $t4, word_value # 100000
+
+    # explanation: load, lb, lbu
+    # 250 in binary: 11111010
+    # lb: treats the leftmost bit as sign bit, and extend with it filling 32 bit
+    # this then represents -6
+    # 11111111 11111111 11111111 11111010
+
+    # lbu: extends with zero instead, always positive, so the value treated as unsigned integer
+    # no 2's complement conversion
+    # 00000000 00000000 00000000 11111010
+
+    # explanation: store, sb, sh, sw
+    # sb: 1 byte
+    # sh: 2 byte halfword = 32/2 = 16 2bytes
+    # sw: 4 byte
+
+    li $t0, 100
+    li $t1, 1000
+    li $t2, 100000
+
+    sb $t0, byte_destination # loads lower 8 bits of t0 into byte destination
+    sh $t1, half_destination # lower 16 bits into half
+    sw $t2, word_destination # all 32 bits of t2 into word_destination
+    # sb: stores the lower 8 bits
+    # sh: stores the lower 16 bits
+    # sw: stores all 32 bits
+
+    # register conventions
+    # $a > arguments to syscall or procedure registers depending on context
+    # $t > temp used by caller to store values to be modified, not important to save and restore old values
+    # v > selects the syscall service and procedure return value.
+    # $s > must save and restore its value, used by callee so its known that its value won't be changed
+    # $sp, stack pointer, allocates memory on the stack
+    # $ra, return address pointer, saved into it the address of the next instruction to be executed after the called function terminates
+
+    j EXIT
 
 EXIT:
     li $v0, 4
